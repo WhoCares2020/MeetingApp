@@ -11,6 +11,8 @@ import pyaudio
 from six.moves import queue
 
 # Audio recording parameters
+from backend.get_emotion import get_emotion
+
 RATE = 16000
 CHUNK = int(RATE / 10)  # 100ms
 
@@ -129,7 +131,9 @@ def listen_print_loop(responses):
             num_chars_printed = len(transcript)
 
         else:
-            print(f"{transcript + overwrite_chars}")
+            corrected_sentence = f"{transcript + overwrite_chars}"
+            print(corrected_sentence)
+            print(get_emotion(sentence=corrected_sentence))
             if f"{transcript + overwrite_chars}".lower().strip() != "exit":
                 total_summary += f"{transcript + overwrite_chars}\n"
                 num_chars_printed = 0
