@@ -131,7 +131,7 @@ def listen_print_loop(responses):
         else:
             print(f"{transcript + overwrite_chars}")
             if f"{transcript + overwrite_chars}".lower().strip() != "exit":
-                total_summary += f"{transcript + overwrite_chars}"
+                total_summary += f"{transcript + overwrite_chars}\n"
                 num_chars_printed = 0
                 continue
             print('Exiting..')
