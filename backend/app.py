@@ -27,9 +27,13 @@ def startrecord():
             socketio.emit('transcript', data=transcript)
             socketio.emit('emotion', data=data)
 
+        def send_summ(*, summary):
+            print(f'ASS: {summary}')
+            socketio.emit('summary', data=summary)
+
         socketio.emit('recording', data=True)
 
-        start_stream_transcription(on_update=send_transcript)
+        start_stream_transcription(on_update=send_transcript, on_exit=send_summ)
     finally:
         socketio.emit('recording', data=False)
 

@@ -94,11 +94,19 @@ function App() {
               </Typography>
             )}
           </Card>
+          <Card className={classes.card}>
+            <Typography variant="h6" style={{ textAlign: "left" }}>
+              Summary
+            </Typography>
+            <Typography style={{ textAlign: "left" }} variant="body1">
+              {summary}
+            </Typography>
+          </Card>
           <Line
             data={{ datasets: [{ data: plotData }] }}
             options={{
               scales: {
-                yAxes: [{ ticks: { min: -0.25, max: 0.25 } }]
+                yAxes: [{ ticks: { min: -0.75, max: 0.75 } }]
               }
             }}
           />

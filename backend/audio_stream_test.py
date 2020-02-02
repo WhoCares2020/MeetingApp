@@ -13,7 +13,8 @@ from six.moves import queue
 import time
 
 # Audio recording parameters
-from get_emotion import get_emotion, get_summary_text
+from get_emotion import get_emotion
+from get_summary import get_summary_text
 
 RATE = 16000
 CHUNK = int(RATE / 10)  # 100ms
@@ -87,7 +88,7 @@ class MicrophoneStream(object):
             yield b''.join(data)
 
 
-def listen_print_loop(responses, *, start_time, on_update=lambda *args: None):
+def listen_print_loop(responses, *, on_update=lambda *args: None, on_exit=lambda *args: None):
     """Iterates through server responses and prints them.
 
     The responses passed is a generator that will block until a response
@@ -102,6 +103,7 @@ def listen_print_loop(responses, *, start_time, on_update=lambda *args: None):
     the next result to overwrite it, until the response is a final one. For the
     final one, print a newline to preserve the finalized transcription.
     """
+    start_time = time.time()
     num_chars_printed = 0
     total_summary = ""
     plot_data = []
@@ -150,9 +152,12 @@ def listen_print_loop(responses, *, start_time, on_update=lambda *args: None):
             print(total_summary)
             with open("full_transcript.txt", "w+") as full_file:
                 full_file.writelines(total_summary)
+
             print(f"Summary of the meeting: {get_summary_text(total_summary)}")
-            with open("summary_of_transcript.txt", "w+") as summary_file:
-                summary_file.writelines(get_summary_text(total_summary))
+            on_exit(summary=get_summary_text(total_summary))
+
+            # with open("summary_of_transcript.txt", "w+") as summary_file:
+            #     summary_file.writelines(get_summary_text(total_summary))
 
             break
 
@@ -165,7 +170,7 @@ def listen_print_loop(responses, *, start_time, on_update=lambda *args: None):
             #     break
 
 
-def start_stream_transcription(*, on_update=lambda *args: None):
+def start_stream_transcription(*, on_update=lambda *args: None, on_exit=lambda *args: None):
     # See http://g.co/cloud/speech/docs/languages
     # for a list of supported languages.
     language_code = 'en-US'  # a BCP-47 language tag
@@ -187,8 +192,6 @@ def start_stream_transcription(*, on_update=lambda *args: None):
         config=config,
         interim_results=True)
 
-    start_time = time.time()
-
     with MicrophoneStream(RATE, CHUNK) as stream:
         audio_generator = stream.generator()
         requests = (types.StreamingRecognizeRequest(audio_content=content)
@@ -197,7 +200,7 @@ def start_stream_transcription(*, on_update=lambda *args: None):
         responses = client.streaming_recognize(streaming_config, requests)
 
         # Now, put the transcription responses to use.
-        listen_print_loop(responses, start_time=start_time, on_update=on_update)
+        listen_print_loop(responses, on_update=on_update, on_exit=on_exit)
 
 
 if __name__ == '__main__':
