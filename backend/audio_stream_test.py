@@ -14,6 +14,7 @@ from six.moves import queue
 from backend.get_emotion import get_emotion
 from backend.get_summary import get_summary_text
 from backend.get_top_keywords import top_keywords
+from backend.zendesk_msg import send_msg
 
 RATE = 16000
 CHUNK = int(RATE / 10)  # 100ms
@@ -145,9 +146,11 @@ def listen_print_loop(responses, *, on_update=lambda _: None):
             print(total_summary)
             print(f"Top words in full : {top_keywords(total_summary)}")
             summary_of_meeting = get_summary_text(total_summary)
-            print(f"Summary of the meeting: {summary_of_meeting}")
-            print(f"Top words in summary : {top_keywords(summary_of_meeting)}")
-            print(get_emotion(summary_of_meeting))
+
+            print(f"Summary of the meeting: {summary_of_meeting}\nTop words in summary : {top_keywords(summary_of_meeting)}\nSentiment Score: {get_emotion(summary_of_meeting)}")
+            # print(f"Top words in summary : {top_keywords(summary_of_meeting)}")
+            # print(get_emotion(summary_of_meeting))
+            send_msg(recieved_msg=f"Summary of the meeting: {summary_of_meeting}\nTop words in summary : {top_keywords(summary_of_meeting)}\nSentiment Score: {get_emotion(summary_of_meeting)}")
             with open("full_transcript.txt", "w+") as full_file:
                 full_file.writelines(total_summary)
             with open("summary_of_transcript.txt", "w+") as summary_file:
