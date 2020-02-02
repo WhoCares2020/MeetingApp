@@ -1,5 +1,6 @@
 from __future__ import division
 
+import math
 import re
 from dotenv import load_dotenv
 import sys
@@ -9,9 +10,10 @@ from google.cloud.speech import enums
 from google.cloud.speech import types
 import pyaudio
 from six.moves import queue
+import time
 
 # Audio recording parameters
-from backend.get_emotion import get_emotion
+from get_emotion import get_emotion
 
 RATE = 16000
 CHUNK = int(RATE / 10)  # 100ms
@@ -86,7 +88,7 @@ class MicrophoneStream(object):
             yield b''.join(data)
 
 
-def listen_print_loop(responses, *, on_update=lambda _: None):
+def listen_print_loop(responses, *, start_time, on_update=lambda *args: None):
     """Iterates through server responses and prints them.
 
     The responses passed is a generator that will block until a response
@@ -103,6 +105,7 @@ def listen_print_loop(responses, *, on_update=lambda _: None):
     """
     num_chars_printed = 0
     total_summary = ""
+    plot_data = []
     for response in responses:
         if not response.results:
             continue
@@ -132,13 +135,17 @@ def listen_print_loop(responses, *, on_update=lambda _: None):
 
         else:
             corrected_sentence = f"{transcript + overwrite_chars}"
+            emotion_val = get_emotion(sentence=corrected_sentence)
             print(corrected_sentence)
-            print(get_emotion(sentence=corrected_sentence))
             if f"{transcript + overwrite_chars}".lower().strip() != "exit":
+                emscore, emmag = emotion_val
+                elapsed = time.time() - start_time
+
                 total_summary += f"{transcript + overwrite_chars}\n"
+                plot_data.append({'x': elapsed, 'y': math.copysign(emmag, emscore)})
                 num_chars_printed = 0
 
-                on_update(total_summary)
+                on_update(transcript=total_summary, emotion={'data': plot_data})
                 continue
             print('Exiting..')
             print(total_summary)
@@ -155,7 +162,7 @@ def listen_print_loop(responses, *, on_update=lambda _: None):
             #     break
 
 
-def start_stream_transcription(*, on_update=lambda _: None):
+def start_stream_transcription(*, on_update=lambda *args: None):
     # See http://g.co/cloud/speech/docs/languages
     # for a list of supported languages.
     language_code = 'en-US'  # a BCP-47 language tag
@@ -177,6 +184,8 @@ def start_stream_transcription(*, on_update=lambda _: None):
         config=config,
         interim_results=True)
 
+    start_time = time.time()
+
     with MicrophoneStream(RATE, CHUNK) as stream:
         audio_generator = stream.generator()
         requests = (types.StreamingRecognizeRequest(audio_content=content)
@@ -185,7 +194,7 @@ def start_stream_transcription(*, on_update=lambda _: None):
         responses = client.streaming_recognize(streaming_config, requests)
 
         # Now, put the transcription responses to use.
-        listen_print_loop(responses, on_update=on_update)
+        listen_print_loop(responses, start_time=start_time, on_update=on_update)
 
 
 if __name__ == '__main__':

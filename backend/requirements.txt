@@ -9,6 +9,7 @@ google-auth
 google-cloud-core
 google-cloud-speech
 google-cloud-storage
+google-cloud-language
 ibm-watson
 matplotlib
 numpy

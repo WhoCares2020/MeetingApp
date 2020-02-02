@@ -5,7 +5,7 @@ import {
   createMuiTheme,
   MuiThemeProvider
 } from "@material-ui/core/styles";
-import { Line } from "react-chartjs-2";
+import { Line, defaults } from "react-chartjs-2";
 import * as d3 from "d3";
 import * as cloud from "d3-cloud";
 import io from "socket.io-client";
@@ -20,6 +20,8 @@ function App() {
   const classes = useStyles();
   const [recording, setRecording] = useState(false);
   const [transcript, setTranscript] = useState("");
+  const [summary, setSummary] = useState("");
+  const [plotData, setPlotData] = useState([]);
 
   const onButtonClick = useCallback(() => {
     fetch("http://localhost:5000/startrecord", { method: "POST" });
@@ -27,10 +29,10 @@ function App() {
 
   const sock = useRef(null);
 
+  console.log(plotData);
+
   useEffect(() => {
     sock.current = io.connect("http://localhost:5000");
-
-    console.log(sock);
     if (sock.current) {
       sock.current.on("connect", () => {
         console.log("connected");
@@ -40,6 +42,11 @@ function App() {
       });
       sock.current.on("recording", setRecording);
       sock.current.on("transcript", setTranscript);
+      sock.current.on("summary", setSummary);
+      sock.current.on("emotion", json_data => {
+        const data = JSON.parse(json_data);
+        setPlotData(data.data);
+      });
     }
 
     return () => {
@@ -48,6 +55,8 @@ function App() {
         sock.current.off("disconnect");
         sock.current.off("recording");
         sock.current.off("transcript");
+        sock.current.off("summary");
+        sock.current.off("emotion");
       }
     };
   }, []);
@@ -85,7 +94,14 @@ function App() {
               </Typography>
             )}
           </Card>
-          <Line data={{ 1: 1, 2: 2 }} />
+          <Line
+            data={{ datasets: [{ data: plotData }] }}
+            options={{
+              scales: {
+                yAxes: [{ ticks: { min: -0.25, max: 0.25 } }]
+              }
+            }}
+          />
 
           {/* <WordCloud */}
           {/*   className={classes.plot} */}
