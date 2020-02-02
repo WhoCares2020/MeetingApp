@@ -86,7 +86,7 @@ class MicrophoneStream(object):
             yield b''.join(data)
 
 
-def listen_print_loop(responses):
+def listen_print_loop(responses, *, on_update=lambda _: None):
     """Iterates through server responses and prints them.
 
     The responses passed is a generator that will block until a response
@@ -137,6 +137,8 @@ def listen_print_loop(responses):
             if f"{transcript + overwrite_chars}".lower().strip() != "exit":
                 total_summary += f"{transcript + overwrite_chars}\n"
                 num_chars_printed = 0
+
+                on_update(total_summary)
                 continue
             print('Exiting..')
             print(total_summary)
@@ -153,7 +155,7 @@ def listen_print_loop(responses):
             #     break
 
 
-def start_stream_transcription():
+def start_stream_transcription(*, on_update=lambda _: None):
     # See http://g.co/cloud/speech/docs/languages
     # for a list of supported languages.
     language_code = 'en-US'  # a BCP-47 language tag
@@ -183,7 +185,7 @@ def start_stream_transcription():
         responses = client.streaming_recognize(streaming_config, requests)
 
         # Now, put the transcription responses to use.
-        listen_print_loop(responses)
+        listen_print_loop(responses, on_update=on_update)
 
 
 if __name__ == '__main__':

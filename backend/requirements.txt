@@ -3,6 +3,7 @@ boto3
 botocore
 Flask
 flask-socketio
+flask-cors
 google-api-core
 google-auth
 google-cloud-core
