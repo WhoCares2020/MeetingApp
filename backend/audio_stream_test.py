@@ -13,11 +13,10 @@ from six.moves import queue
 import time
 
 # Audio recording parameters
-from get_emotion import get_emotion
+from get_emotion import get_emotion, get_summary_text
 
 RATE = 16000
 CHUNK = int(RATE / 10)  # 100ms
-
 
 load_dotenv(verbose=True)
 
@@ -149,8 +148,12 @@ def listen_print_loop(responses, *, start_time, on_update=lambda *args: None):
                 continue
             print('Exiting..')
             print(total_summary)
-            with open("result.txt", "w+") as file:
-                file.writelines(total_summary)
+            with open("full_transcript.txt", "w+") as full_file:
+                full_file.writelines(total_summary)
+            print(f"Summary of the meeting: {get_summary_text(total_summary)}")
+            with open("summary_of_transcript.txt", "w+") as summary_file:
+                summary_file.writelines(get_summary_text(total_summary))
+
             break
 
             # Exit recognition if any of the transcribed phrases could be
